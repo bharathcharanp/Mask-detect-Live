@@ -1,0 +1,57 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python mask detector live
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+#      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
+        
+    - name: Install dependencies
+      run: pip3 install -r requirements.txt
+      
+    - name: Test with unittest
+      run:  python3 source/test_model.py
+
+
+    - name: Build and Push Docker Image
+      uses: mr-smithers-excellent/docker-build-push@v4
+      with:
+        image: bharathcharanp/minicalculator
+        tag: latest
+        registry: docker.io
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }} 
+
+
+
+                
+    - name: Deploy to heroku        
+      uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
+      with:
+        heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+        heroku_app_name: "mask-detect-live"
+        heroku_email: "pbharathcharan@gmail.com"
+        usedocker: true
+
+
+    - name: Heroku login status
+      run:  heroku auth:whoami
+
+
+     
